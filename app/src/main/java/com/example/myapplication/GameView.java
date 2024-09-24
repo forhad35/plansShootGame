@@ -9,41 +9,39 @@ import android.graphics.Canvas;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import java.util.Random;
+import java.util.ArrayList;
 
 public class GameView extends View {
     Bitmap background ;
-    int width,height,planX,planY,velocity,planFrame,planWidth;
-    Bitmap[] plan = new Bitmap[6];
-    Random random;
+   static int width,height;
     Handler handler;
     Runnable runnable;
     final long updateMills = 30;
+    ArrayList<Plane> planes ;
+    ArrayList<Plane2> plane2s;
+    Plane2 plane2;
 
     public GameView(Context context) {
         super(context);
         background= BitmapFactory.decodeResource(getResources(),R.drawable.background);
         Point size = new Point();
         ((Activity )getContext()).getWindowManager().getDefaultDisplay().getSize(size);
-
         width = size.x;
         height = size.y;
-        plan[0]=BitmapFactory.decodeResource(getResources(),R.drawable.frame_0);
-        plan[1]=BitmapFactory.decodeResource(getResources(),R.drawable.frame_1);
-        plan[2]=BitmapFactory.decodeResource(getResources(),R.drawable.frame_2);
-        plan[3]=BitmapFactory.decodeResource(getResources(),R.drawable.frame_3);
-        plan[4]=BitmapFactory.decodeResource(getResources(),R.drawable.frame_4);
-        plan[5]=BitmapFactory.decodeResource(getResources(),R.drawable.frame_5);
-        planX = -300;
-        planY = 100;
-        velocity = 15;
-        planFrame =0;
-        planWidth = plan[0].getWidth();
+        planes = new ArrayList<>();
+        plane2s = new ArrayList<>();
+
+        for (int i=0; i<2; i++){
+            Plane2 plane2 = new Plane2(context);
+            Plane plane = new Plane(context);
+            planes.add(plane);
+            plane2s.add(plane2);
+        }
         handler = new Handler();
         runnable = new Runnable() {
             @Override
@@ -51,7 +49,7 @@ public class GameView extends View {
                 invalidate();
             }
         };
-        random = new Random();
+
 
 
     }
@@ -62,23 +60,40 @@ public class GameView extends View {
         @SuppressLint("DrawAllocation")
         Rect rect = new Rect(0,0,width,height);
         canvas.drawBitmap(background,null,rect,null);
-        canvas.drawBitmap(plan[planFrame],planX,planY,null);
-        planFrame++;
-        if (planFrame>5){
-            planFrame=0;
-        }
-        planX +=velocity;
-        try {
-            if (planX > width+planWidth){
-                planX = -random.nextInt(500);
-                planY = random.nextInt(200);
-                velocity = 10 + random.nextInt(10);
-            }
 
-        }catch (Exception e){
-            System.out.println("${e}");
-            Log.d("hhh", String.valueOf(e));
-        }
+      try {for (int i = 0;i<plane2s.size();i++){
+          plane2 = plane2s.get(i);
+          canvas.drawBitmap(plane2.get_planFrame(),plane2.planeX,plane2.planeY,null);
+          plane2.planeFrame++;
+          if (plane2.planeFrame>5){
+              plane2.planeFrame=0;
+          }
+          plane2.planeX -=plane2.velocity;
+          if (plane2.planeX < -plane2.get_planeWidth()){
+              plane2.reset_position();
+          }
+
+      }
+
+          for (int i =0; i<planes.size();i++){
+              Plane plane = planes.get(i);
+              canvas.drawBitmap(plane.get_planFrame(),plane.planeX,plane.planeY,null);
+              plane.planeFrame++;
+              if (plane.planeFrame>5){
+                  plane.planeFrame=0;
+              }
+              plane.planeX +=plane.velocity;
+
+              if (plane.planeX > width+plane.get_planeWidth()){
+                  plane.reset_position();
+              }
+          }
+      }catch (Exception e){
+          Toast.makeText(GameView.this.getContext(), e.toString(), Toast.LENGTH_SHORT).show();
+      }
+
+
+
         handler.postDelayed(runnable,updateMills);
 
     }
